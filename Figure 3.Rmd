@@ -1,0 +1,729 @@
+#libraries
+```{r}
+library(tidyverse)
+library(tcltk2)
+library(systemfonts)
+library(lubridate)
+library(DescTools)
+library(Matrix)
+library(dplyr)
+library(MASS)
+library(stringr)
+library(zoo)
+library(scales)
+library(gridExtra)
+library(pracma)
+library(openxlsx)
+library(svglite)
+library(patchwork)
+```
+
+#peak stats
+```{r}
+t_test_results <- list()
+
+for (current_treatment in unique(peak_frequency$Treatment)) {
+  subset_data <- peak_frequency[peak_frequency$Treatment == current_treatment, ]
+  
+  baseline_values <- subset_data$frequency[subset_data$period == "baseline"]
+  drug_values <- subset_data$frequency[subset_data$period == "drug period"]
+  
+  # Corrected assignment operator
+  t_test_result <- t.test(baseline_values, drug_values, paired = TRUE)
+  
+  # Use current_treatment directly as the list key
+  t_test_results[[current_treatment]] <- t_test_result
+}
+
+print(t_test_results)
+
+t_test_results <- list()
+
+for (current_treatment in unique(peak_magnitude$Treatment)) {
+  subset_data <- peak_magnitude[peak_magnitude$Treatment == current_treatment, ]
+  
+  baseline_values <- subset_data$avg_mag[subset_data$period == "baseline"]
+  drug_values <- subset_data$avg_mag[subset_data$period == "drug period"]
+  
+  # Corrected assignment operator
+  t_test_result <- t.test(baseline_values, drug_values, paired = TRUE)
+  
+  # Use current_treatment directly as the list key
+  t_test_results[[current_treatment]] <- t_test_result
+}
+
+print(t_test_results)
+```
+
+#Ephys figures 
+```{r}
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/")
+amplitude_data <- readxl::read_excel("ephys_rawdata_YL.xlsx", sheet = 1) %>% 
+  rename(mouse_id = 'Raw amplitude data (pA)', baseline=Pre)   %>%
+  dplyr:: select(baseline, Post, mouse_id) %>%
+      pivot_longer(cols = c(baseline, Post), names_to = "timepoint", values_to = "amplitude") %>%
+  drop_na(mouse_id) 
+
+amplitude_summary <- amplitude_data %>%
+  group_by(timepoint) %>%
+  summarize(
+    mean = mean(amplitude, na.rm = TRUE),
+    sem = sd(amplitude, na.rm = TRUE) / sqrt(n()))
+
+ppr_data <- readxl::read_excel("ephys_rawdata_YL.xlsx", sheet = 2) %>% 
+  rename(mouse_id ='PPR', baseline= 'Pre') %>%
+  dplyr:: select(baseline, Post, mouse_id) %>%
+      pivot_longer(cols = c(baseline, Post), names_to = "timepoint", values_to = "ppr") %>%
+  drop_na(mouse_id) 
+
+ppr_summary <- ppr_data %>%
+  group_by(timepoint) %>%
+  summarize(
+    mean = mean(ppr, na.rm = TRUE),
+    sem = sd(ppr, na.rm = TRUE) / sqrt(n()))
+
+cv_data <- readxl::read_excel("ephys_rawdata_YL.xlsx", sheet = 3) %>% 
+  rename(mouse_id = 'CV', baseline=Pre) %>%
+  dplyr:: select(baseline, Post, mouse_id) %>%
+      pivot_longer(cols = c(baseline, Post), names_to = "timepoint", values_to = "cv") %>%
+  drop_na(mouse_id) 
+
+cv_summary <- cv_data %>%
+  group_by(timepoint) %>%
+  summarize(
+    mean = mean(cv, na.rm = TRUE),
+    sem = sd(cv, na.rm = TRUE) / sqrt(n()))
+  
+
+plot <- ggplot(amplitude_data, aes(x = timepoint)) +
+  geom_bar(aes(y = amplitude, fill = timepoint, color = timepoint), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=amplitude_summary, aes(ymin = mean - sem, ymax = mean + sem, color=timepoint),
+                width = 0.2) +
+  scale_color_manual(values = c("baseline"="white", "Post"="darkgreen")) +
+  geom_point(aes(y = amplitude, fill = timepoint, color = timepoint), size = 2) +
+  geom_path(aes(group = mouse_id, y = amplitude, fill = timepoint), alpha = 0.7, color="black") +  
+  theme_classic() +
+  scale_color_manual(values = c("baseline"="black", "Post"="darkgreen")) +
+  scale_fill_manual(values=c("baseline"="white", "Post"="darkgreen"))+
+  scale_y_continuous(limits = c(0, 2500), expand = expansion(mult = c(0, 0.02))) +
+  ylab("IPSC Amplitude (pA)") +
+  scale_x_discrete(labels = str_wrap(c("Baseline", "Quetiapine"), width = 10)) +
+theme(
+    axis.text.x = element_text(size = 25, color = "black"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(family = "Arial", size = 25),  # Set font to Arial
+    plot.title = element_text(hjust = 0.5, family = "Arial"),  # Title font
+    axis.line = element_line(size = 1.2),
+    axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+  guides(fill = FALSE, color = FALSE)  # Remove legend for fill and color
+  
+  print(plot)
+  
+      # Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/EPS files")
+
+# Use Cairo EPS device
+cairo_ps("fig 3F.eps", width = 5.2, height = 8, family = "ArialMT", pointsize = 12)
+
+# Create the plot
+print(plot)
+
+# Close the Cairo EPS device
+dev.off()
+
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_3F.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+
+plot <- ggplot(ppr_data, aes(x = timepoint)) +
+  geom_bar(aes(y = ppr, fill = timepoint, color = timepoint), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+   geom_errorbar(data=ppr_summary, aes(ymin = mean - sem, ymax = mean + sem, color=timepoint),
+                width = 0.2) +
+  scale_color_manual(values = c("baseline"="white", "Post"="darkgreen")) +
+  geom_point(aes(y = ppr, fill = timepoint, color = timepoint), size = 2) +
+  geom_path(aes(group = mouse_id, y = ppr, fill = timepoint), alpha = 0.7, color="black") +  
+  theme_classic() +
+  scale_color_manual(values = c("baseline"="black", "Post"="darkgreen")) +
+  scale_fill_manual(values=c("baseline"="white", "Post"="darkgreen"))+
+  scale_y_continuous(limits = c(0, 2.0), expand = expansion(mult = c(0, 0.02))) +
+  ylab("Paired Pulse Ratio") +
+  scale_x_discrete(labels = str_wrap(c("Baseline", "Quetiapine"), width = 10)) +
+theme(
+    axis.text.x = element_text(size = 25, color = "black"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(family = "Arial", size = 25),  # Set font to Arial
+    plot.title = element_text(hjust = 0.5, family = "Arial"),  # Title font
+    axis.line = element_line(size = 1.2),
+    axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+  guides(fill = FALSE, color = FALSE)  # Remove legend for fill and color
+  
+  print(plot)
+  
+      # Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/EPS files")
+
+# Use Cairo EPS device
+cairo_ps("fig 3G.eps", width = 5.2, height = 8, family = "ArialMT", pointsize = 12)
+
+# Create the plot
+print(plot)
+
+# Close the Cairo EPS device
+dev.off()
+
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_3G.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+
+plot <- ggplot(cv_data, aes(x = timepoint)) +
+  geom_bar(aes(y = cv, fill = timepoint, color = timepoint), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+   geom_errorbar(data=cv_summary, aes(ymin = mean - sem, ymax = mean + sem, color=timepoint),
+                width = 0.2) +
+  scale_color_manual(values = c("baseline"="white", "Post"="darkgreen")) +
+  geom_point(aes(y = cv, fill = timepoint, color = timepoint), size = 2) +
+  geom_path(aes(group = mouse_id, y = cv, fill = timepoint), alpha = 0.7, color="black") +  
+  theme_classic() +
+  scale_color_manual(values = c("baseline"="black", "Post"="darkgreen")) +
+  scale_fill_manual(values=c("baseline"="white", "Post"="darkgreen"))+
+  scale_y_continuous(limits = c(0, 0.55), expand = expansion(mult = c(0, 0.02))) +
+  ylab("Coefficient of Variation") +
+  scale_x_discrete(labels = str_wrap(c("Baseline", "Quetiapine"), width = 10)) +
+theme(
+    axis.text.x = element_text(size = 25, color = "black"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(family = "Arial", size = 25),  # Set font to Arial
+    plot.title = element_text(hjust = 0.5, family = "Arial"),  # Title font
+    axis.line = element_line(size = 1.2),
+    axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+  guides(fill = FALSE, color = FALSE)  # Remove legend for fill and color
+  
+  print(plot)
+  
+      # Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/EPS files")
+
+# Use Cairo EPS device
+cairo_ps("fig 3h.eps", width = 5.2, height = 8, family = "ArialMT", pointsize = 12)
+
+# Create the plot
+print(plot)
+
+# Close the Cairo EPS device
+dev.off()
+
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_3H.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+
+#Martiniova Functions
+```{r Martiniova Functions}
+WhittakerSmooth <- function(x,w,lambda,differences=1) {
+  x=matrix(x,nrow = 1, ncol=length(x))
+  L=length(x)
+  E=spMatrix(L,L,i=seq(1,L),j=seq(1,L),rep(1,L))
+  D=as(diff(E,1,differences),"dgCMatrix")
+  W=as(spMatrix(L,L,i=seq(1,L),j=seq(1,L),w),"dgCMatrix")
+  background=solve((W+lambda*t(D)%*%D),t((w*x)));
+  return(as.vector(background))
+}
+
+airPLS <- function(x,lambda=10,differences=1, itermax=20){
+  
+  x = as.vector(x)
+  m = length(x)
+  w = rep(1,m)
+  control = 1
+  i = 1
+  while(control==1){
+    z = WhittakerSmooth(x,w,lambda,differences)
+    d = x-z
+    sum_smaller = abs(sum(d[d<0])) 
+    if(sum_smaller<0.001*sum(abs(x))||i==itermax)
+    {
+      control = 0
+    }
+    w[d>=0] = 0
+    w[d<0] = exp(i*abs(d[d<0])/sum_smaller)
+    w[1] = exp(i*max(d[d<0])/sum_smaller)
+    w[m] = exp(i*max(d[d<0])/sum_smaller)
+    i=i+1
+  }
+  return(z) 
+}
+
+movavg <- function(v, win)
+{
+  
+  f = rep(1, win) / win
+  n = length(v)
+  v1 = c(rep(v[1], win), v, rep(v[n],win))
+  v1 = stats::filter(v1, f)
+  return(v1[win+1:n])
+}
+
+```
+
+
+
+#Elly file read, clean-up, combine, add z scores
+```{r}
+setwd(tk_choose.dir(caption = "Where is your data?"))
+filenames <- list.files(getwd())
+filenames <- filenames[grepl(".csv$", filenames)]
+processed_data <- list()
+for (i in 1:length(filenames)) {
+  
+  #import raw .csv
+  mouse_raw <- read.csv(filenames[i], header = TRUE, skip = 1)
+
+#make fresh df
+df_raw <- data.frame(time_ms = mouse_raw$TimeStamp[1:nrow(mouse_raw)],
+             raw_reference = mouse_raw$CH1.410[1:nrow(mouse_raw)],
+             raw_signal = mouse_raw$CH1.470[1:nrow(mouse_raw)])
+ df_raw <- na.omit(df_raw)
+
+df_raw <- df_raw %>%
+  mutate(mins = time_ms/60000) %>%
+  mutate(file = filenames[i]) %>%
+  extract(file, c("Mouse", "Date", "Treatment"), "([[:alnum:]]+)_([.[:alnum:]]+)_([[:alnum:]]+)", remove = T) %>%
+  unite(datemouse, Date, Mouse, remove = F) %>%
+  unite(treatmentmouse, Treatment, Mouse, remove = F) %>%
+  mutate(Date = mdy(Date))
+
+#moving average
+smooth_win = 10
+smooth_reference <- movavg(df_raw$raw_reference, smooth_win)
+smooth_signal <- movavg(df_raw$raw_signal, smooth_win)
+#PLS
+lambda = 5e4
+itermax = 50
+differences = 1
+base_r <- airPLS(smooth_reference, lambda, differences, itermax)
+base_s <- airPLS(smooth_signal, lambda, differences, itermax)
+#remove beginning of traces
+remove = 200
+n = length(df_raw$raw_reference)
+reference <- smooth_reference[(remove + 1):n] - base_r[(remove + 1):n]
+signal <- smooth_signal[(remove + 1):n] - base_s[(remove + 1):n]
+#standardize traces
+z_reference <- (reference - median(reference)) / sd(reference)
+z_signal <- (signal - median(signal)) / sd(signal)
+# Robust linear regression
+require(MASS)
+fit <- rlm(z_signal ~ z_reference)
+# Align reference trace to signal
+z_reference_fit <- predict(fit)
+#Calculate z-score zdF/F
+zdFF <- z_signal - z_reference_fit
+
+df_raw <- df_raw %>% slice(-(1:200)) %>%
+  mutate(zscore = zdFF)
+
+ processed_data[[i]] <- df_raw
+}
+
+names(processed_data) <- filenames
+all_data_pls <- bind_rows(processed_data) %>% filter(!is.na(zscore)) 
+ 
+
+```
+
+#find peaks functions
+```{r}
+# Function to calculate a rolling threshold based on the MAD (Median Absolute Deviation)
+rollThresh <- function(x, k , mad_threshold) {
+  med <- zoo::rollmedian(x, k = k, fill = NA, align="left")
+  mad <- zoo::rollapply(x, width = k, FUN = mad, fill = NA, align="left")
+  upper_bound <- med + mad_threshold * mad
+  return(upper_bound)
+}
+
+photompeaks <- function(x, mad_threshold, absolute_threshold= 2.5) {  
+   # Identify candidate peaks
+   peaks <- which(x > mad_threshold | x > absolute_threshold )  
+   peak_values <- x[peaks]
+   
+   # Ensure peaks are local maxima (higher than neighbors on either side)
+   local_max_peaks <- peaks[peak_values > x[pmax(peaks - 1, 1)] & peak_values > x[pmin(peaks + 1, length(x))]]
+   
+   return(local_max_peaks)
+}
+```
+
+#peak analysis
+```{r}
+peak_list <- list()
+
+for (current_treatmentmouse in unique(all_data_pls$treatmentmouse)) {
+  
+  # Subset the data for the current 'treatmentmouse'
+  subset_data <- all_data_pls[all_data_pls$treatmentmouse == current_treatmentmouse, ]
+  
+  # Calculate the rolling threshold
+  #k needs to be odd and should be based on how often you expect peaks
+  threshold <- rollThresh(subset_data$zscore, k = 21, mad_threshold = 2.5)
+  
+  # Store the rolling threshold in a new column
+  subset_data$rolling_threshold <- threshold
+  
+  # Detect peaks
+  peaks <- photompeaks(subset_data$zscore, threshold)
+  
+  # Use ifelse to mark if each zscore is a peak or not
+  is_peak <- ifelse(seq_along(subset_data$zscore) %in% peaks, TRUE, FALSE)
+  
+  # Add is_peak to the current subset data tibble
+  subset_data$is_peak <- is_peak
+  
+  #add it to peak list
+  peak_list[[current_treatmentmouse]] <- subset_data
+}
+
+all_data_pls <- dplyr::bind_rows(peak_list) %>%
+mutate(is_peak = ifelse(is_peak == TRUE & zscore < 0.75, FALSE, is_peak))
+
+#peak counts by period
+peak_counts <- all_data_pls %>%
+  mutate(period = case_when(mins <= 15 ~ "baseline", mins >= 45 ~ "drug period")) %>%
+  group_by(treatmentmouse, period, Treatment) %>%
+  summarise(peak_count = sum(is_peak, na.rm = TRUE)) %>%
+  ungroup()
+
+#peak frequency
+peak_frequency <- peak_counts %>%
+  mutate(frequency = case_when(
+    period == "baseline" ~ peak_count / 15,
+    period == "drug period" ~ peak_count / 15
+  ))
+
+#peak magnitude might want to subtract rolling threshold
+peak_magnitude <- all_data_pls %>%
+  mutate(peak_mag = ifelse(is_peak == TRUE, zscore, NA)) %>%
+  mutate(period = case_when(mins <= 15 ~ "baseline", mins >= 45 ~ "drug period")) %>%
+  group_by(treatmentmouse, period, Treatment) %>%
+  summarise(avg_mag = mean(peak_mag, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+#Figure 3D
+```{r}
+vehicle_frequency <- data.frame(peak_frequency) %>% filter(Treatment=="baselineandvehicle") %>% drop_na(period)
+quet_frequency <- data.frame(peak_frequency) %>% filter(Treatment=="baselineandquetiapine15") %>% drop_na(period)
+
+veh_summary <- vehicle_frequency %>%
+  group_by(period) %>%
+  summarize(
+    mean = mean(frequency, na.rm = TRUE),
+    sem = sd(frequency, na.rm = TRUE) / sqrt(n()))
+
+quet_summary <- quet_frequency %>%
+  group_by(period) %>%
+  summarize(
+    mean = mean(frequency, na.rm = TRUE),
+    sem = sd(frequency, na.rm = TRUE) / sqrt(n()))
+
+# Plot for Vehicle
+plot_veh <- ggplot(vehicle_frequency, aes(x = period)) +
+  geom_bar(aes(y = frequency, fill = period, color = period), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=veh_summary, aes(ymin = mean - sem, ymax = mean + sem, color=period),
+                width = 0.2) +
+  scale_fill_manual(values = c("baseline"="white", "drug period"="gray"))+
+  guides(fill = FALSE, color = FALSE) +  # Remove legend for fill and color 
+  geom_point(aes(y = frequency, fill=period, color=period), size = 1.5) +
+  scale_fill_manual(values = c("baseline"="white", "drug period"="gray46"))+
+  scale_color_manual(values=c("baseline"="black", "drug period"="gray46")) +
+  geom_path(aes(group = treatmentmouse, y = frequency), alpha = 0.8) +
+  theme_classic() +
+  ylab("Peak Frequency (peaks/min)") +
+  scale_y_continuous(limits=c(0,10)) +
+  scale_x_discrete(labels = c("Baseline", "Vehicle")) +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis label
+    axis.text.x.bottom = element_text(size = 20, color = "black"),
+     text = element_text(size = 25),
+    axis.text.y = element_text(color = "black"),
+        axis.line = element_line(size = 1.2), 
+     axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) 
+# Plot for Quetiapine
+plot_quet <- ggplot(quet_frequency, aes(x = period)) +
+   geom_bar(aes(y = frequency, fill = period, color = period), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=quet_summary, aes(ymin = mean - sem, ymax = mean + sem, color=period),
+                width = 0.2) +
+  scale_fill_manual(values=c("baseline"="white", "drug period"="darkgreen")) +
+  guides(fill = FALSE, color = FALSE) +  # Remove legend for fill and color
+  geom_point(aes(y = frequency, fill=period, color=period), size = 1.5) +
+  scale_fill_manual(values=c("baseline"="white", "drug period"="darkgreen")) +
+  scale_color_manual(values=c("baseline"="black", "drug period"="darkgreen")) +
+  geom_path(aes(group = treatmentmouse, y = frequency), alpha = 0.8) +
+  theme_classic() +
+  ylab("Peak Frequency (peaks/min)") +
+  scale_y_continuous(limits=c(0,10)) +
+  scale_x_discrete(labels = c("Baseline", "Quetiapine")) +
+  theme(
+    axis.title.x = element_blank(),  
+    axis.title.y = element_blank(), 
+    axis.ticks.y = element_blank(), 
+    axis.text.y = element_blank(),
+     axis.text.x.bottom = element_text(size = 20, color="black"),
+     text = element_text(size = 25),
+        axis.line = element_line(size = 1.2), 
+    axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) 
+
+# Combine plots using patchwork
+combined_plot <- plot_veh + plot_quet + plot_layout(ncol = 2)
+
+# Export the plot to EPS
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_3C.pdf",
+  plot = combined_plot,
+  device = cairo_pdf,
+  width = 10.4,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+
+print(combined_plot)
+```
+
+
+#Figure 3B (sample traces)
+```{r}
+mouse_own_plot <- filter(all_data_pls, treatmentmouse == "baselineandquetiapine15_d3gcamp50")
+  
+plot <- ggplot(mouse_own_plot, aes(x = mins, y = zscore)) +
+    theme_classic() + 
+    geom_line(color = "forestgreen") + 
+    geom_vline(xintercept = 15, size = 1) + 
+    theme(
+        axis.title = element_text(face = "bold", size = 14),  # Bold and larger axis labels
+        axis.text = element_text(size = 12)# Larger axis text
+    )
+
+print(plot)
+
+# Define the first zoom-in period: a 30-second window in the first 15 minutes
+plot1_data <- mouse_own_plot %>%
+  filter(mins >= 13 & mins < 15)  # Replace 3-3.5 mins with the desired 30-second window
+
+# Define the second zoom-in period: a 30-second window between 40 and 45 minutes
+plot2_data <- mouse_own_plot %>%
+  filter(mins >= 45 & mins < 47)  # Replace 41-41.5 mins with the desired 30-second window
+
+# Create the first zoom-in plot
+plot1 <- ggplot(plot1_data, aes(x = mins, y = zscore)) +
+  theme_classic() +
+  geom_line(color = "black") +
+  scale_y_continuous(limits = c(-2, 5)) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks= element_blank(),
+    axis.title = element_blank(), 
+    axis.line =element_blank()
+    # Center, bold, and enlarge title
+  )
+
+# Create the second zoom-in plot
+plot2 <- ggplot(plot2_data, aes(x = mins, y = zscore)) + 
+  theme_classic() + 
+  geom_line(aes(color = "Quetiapine")) +   # This will create a legend entry for "Quetiapine"
+  scale_color_manual(values = c("Quetiapine" = "darkgreen")) +  # Specify the color for the legend entry
+  scale_y_continuous(limits = c(-2, 5)) + 
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    axis.line = element_blank(),
+    legend.position = c(1, 1), 
+    legend.justification = c(1, 1), 
+    legend.title = element_blank(),
+      legend.text = element_text(size=14, family = "Arial")# Remove legend title
+  )
+
+print(plot2)
+
+# Print the plots
+print(plot1)
+print(plot2)
+
+mouse_own_plot <- filter(all_data_pls, treatmentmouse == "baselineandvehicle_d3gcamp50")
+  
+plot <- ggplot(mouse_own_plot, aes(x = mins, y = zscore)) +
+    theme_classic() + 
+    geom_line(color = "gray") + 
+    geom_vline(xintercept = 15, size = 1) + 
+    theme(
+        axis.title = element_text(face = "bold", size = 14),  # Bold and larger axis labels
+        axis.text = element_text(size = 12)  # Larger axis text
+    )
+
+print(plot)
+
+plot <- ggplot(mouse_own_plot, aes(x = mins, y = zscore)) +
+    theme_classic() + 
+    geom_line(color = "black") + 
+    geom_vline(xintercept = 15, size = 1) + 
+    theme(
+        axis.title = element_text(face = "bold", size = 14),  # Bold and larger axis labels
+        axis.text = element_text(size = 12)# Larger axis text
+    ) +
+  xlim(0, 15)
+
+print(plot)
+
+# Define the first zoom-in period: a 30-second window in the first 15 minutes
+plot1_data <- mouse_own_plot %>%
+  filter(mins >= 13 & mins < 15)  # Replace 3-3.5 mins with the desired 30-second window
+
+# Define the second zoom-in period: a 30-second window between 40 and 45 minutes
+plot2_data <- mouse_own_plot %>%
+  filter(mins >= 45 & mins < 47)  # Replace 41-41.5 mins with the desired 30-second window
+
+# Create the first zoom-in plot
+plot3 <- ggplot(plot1_data, aes(x = mins, y = zscore)) +
+  theme_classic() +
+  geom_line(color = "black") +
+  ggtitle("Baseline") +
+  scale_y_continuous(limits = c(-2, 5)) +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 25, family = "Arial"),
+    axis.text = element_blank(),
+    axis.ticks= element_blank(),
+    axis.title = element_blank(),
+    axis.line =element_blank()
+    # Center, bold, and enlarge title
+  )
+
+# Create the second zoom-in plot with a legend for the dark gray line
+plot4 <- ggplot(plot2_data, aes(x = mins, y = zscore)) + 
+  theme_classic() + 
+  geom_line(aes(color = "Vehicle")) +  
+  scale_color_manual(values = c("Vehicle" = "darkgray")) +
+  scale_y_continuous(limits = c(-2, 5)) + 
+  ggtitle("Treatment") + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 25, family = "Arial"),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    axis.line = element_blank(),
+    legend.position = c(1, 1), 
+    legend.justification = c(1, 1),  
+    legend.title = element_blank(),
+    legend.text = element_text(size=14, family = "Arial")
+  )
+
+print(plot4)
+
+# Print the plots
+print(plot3)
+print(plot4)
+
+# Combine plots using patchwork
+combined_plot <- plot3 + plot4 + plot1 + plot2 + 
+                 plot_layout(ncol = 2, widths = c(1, 1), heights = c(1, 1)) + 
+                 theme(plot.margin = margin(0, 0, 0, 30))
+
+# Export the plot to EPS
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_3B.pdf",
+  plot = combined_plot,
+  device = cairo_pdf,
+  width = 10.4,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+
+print(combined_plot)
+
+```
+
+#plots peaks over time
+```{r}
+for (treatment_mouse in unique(all_data_pls$treatmentmouse)) {
+  mouse_own_plot <- filter(all_data_pls, treatmentmouse == treatment_mouse)
+  
+  plot <- ggplot(mouse_own_plot, aes(x = mins, y = zscore, color=Treatment)) +
+    theme_classic() + 
+    geom_vline(xintercept = 15) + 
+    geom_line() +
+    geom_point(
+      data = filter(mouse_own_plot, is_peak == TRUE), # Only plot points where is_peak is TRUE
+      color = "black", size = 0.8, shape=8) +
+    ggtitle(paste("Treatment Mouse:", treatment_mouse)) + # Add a title to differentiate plots
+    scale_color_manual(values=cols) 
+  print(plot)
+}

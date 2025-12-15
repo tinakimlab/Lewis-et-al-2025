@@ -1,0 +1,80 @@
+#libraries
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+#import files
+```{r}
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/")
+
+# Read medial region
+med_sh <- readxl::read_excel("Figure S4.xlsx", sheet = 1) %>%
+  mutate(Region = "MedSh")
+
+lat_sh <- readxl::read_excel("Figure S4.xlsx", sheet = 2) %>%
+  mutate(Region = "LatSh")
+
+all_rois <- bind_rows(med_sh, lat_sh) %>%
+  mutate(brain = sub(":.*$", "", tif)) %>%
+  group_by(brain, Region) %>%
+  summarise(
+    n = n() / 250 * 1000,        # cells per mm²
+    .groups = "drop") %>%
+  group_by(Region) %>%
+  mutate(
+    mean_n = mean(n),                    # mean cells per µm²
+    sem    = sd(n) / sqrt(dplyr::n())     # SEM across brains
+  ) %>%
+  ungroup()
+
+
+```
+
+#graphs and stats
+```{r}
+plot <- ggplot(all_rois) +
+   geom_bar(aes(x=Region, y = n), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7,
+           color="red", fill = "red") +
+  geom_point(aes(x=Region, y = n), color = "red") +
+  theme_classic() +
+      geom_path(aes(group = brain, y = n, x= Region), alpha = 0.8) +
+  geom_errorbar(aes(ymin = mean_n - sem, ymax = mean_n + sem, x = Region), width = 0.2, color = "red") +
+  ylab("Cell Count/ um2") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+        axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")) 
+
+print(plot)
+
+
+t_test_result <- t.test(n ~ Region, data = all_rois)
+t_test_result
+
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_S4D.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+

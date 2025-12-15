@@ -1,0 +1,1115 @@
+
+#libraries
+```{r}
+library(tidyverse)
+library(tcltk2)
+library(lubridate)
+library(stringr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(extrafont)
+  #font_import()
+  loadfonts(device = "postscript")
+  library(afex)
+library(emmeans)
+  library(openxlsx)
+```
+#filling in table
+```{r}
+#blue light or orange light sides
+light_side <-c("d3chr1" = "left", "d3chr2" = "right", "d3chr3"="left", "d3chr4"= "left", "d3chr5"="right", "d3chr6" = "right", "d3gcamp27"="right", "d3gcamp28"="left", "d3chr7"="right", "d3chr8"= "right", "d3chr9"="left", "d3chr10"="left", "d3gcamp31"="left", "d3gcamp33"="right", "d3gcamp34"="right", "d1spark1"="left", "d1spark2"="left", "d1spark3"="right", "d1spark4"="right", "d1spark5"="left", "d1spark6"="left", "d1spark7"="right", "d1spark8"="right", "d3chr11"="left", "d3chr12"="left", "d3chr13"="right", "d3chr14"="right", "d3chr15"="right", "d3chr16"="left", "d3chr17"="left", "d3chr18"="left", "wtchr1"="right", "wtchr3"="left", "wtchr4"="right", "wtchr5"="right", "d3gcamp36"="right", "d3gcamp38"="left", "d3gcamp39"="left", "d3chr19"="left", "d3chr20"="right", "d3chr21"="right", "d3chr22"="left", "d3chr26"="right", "d3chr27"="right", "d3chr28"="left", "d3halo1"="left", "d3halo2"="right", "d3halo3"="left", "d3halo4"="right", "d3halo5"="right", "d3halo6"="left", "d3gcamp43"="left", "d3gcamp44"="left", "d3halo7"="left", "d3halo8"="right", "d3halo9"="right", "d3halo10"="right", "wtchr6"="left", "wtchr7"="right", "wtchr8"="right", "wtchr9"="right", "wtchr10"="left", "d3gcamp40"="left", "d3gcamp41"="left", "d3gcamp42"="right", "d3chr24"="right", "d3chr25"="left", "d3chr29"="right", "d3chr23"="right", "D1spark1"="left", "D1spark3"="right", "D1spark4"="left", "D1spark5"="right", "D1spark6"="left", "D1spark7"="right", "d3halo12"="left", "d3halo13"="right", "d3halo14"="left", "d3halo16"="left", "d3halo17"="left", "d3halo18"="right", "d3yfp1"="right", "d3yfp3"="left", "d3yfp4"="right", "d3yfp5"="left", "d3yfp6"="right", "d3chr30"="left", "d3chr31"="right", "d3chr32"="right", "d3chr33"="left", "d3chr34"="right", "d3chr35"="left", "wtspark2"="right", "wtspark3"="left", "wtspark4"="left", "wtspark5"="left", "wtspark6"="right", "wtspark7"="right", "wtspark8"="right", "wtspark9"="right", "wtspark10"="left", "d1crespark1"="right", "d1crespark2"="left", "d1crespark3"="right", "d1crespark4"="left", "d1crespark5"="right", "d1crespark6"="left", "d1crespark7"="left", "d1crespark8"="right", "d1crespark9"="left", "d1crespark10"="right", "d1crespark11"="left", "d1crespark12"="right", "d1crespark13"="left", "d1crespark14"="right", "d1crespark15"="left", "spark3"="left", "spark5"="left", "spark7"="right", "spark9"="right", "d3halo20"="right", "d3halo21"="right", "d3halo22"="left", "d3halo24"="right", "d3halo25"="left", "d3halo26"="left", "bluecontrol20"="right", "bluecontrol22"="left", "d3gcamp50"="left", "d3gcamp51"="left", "d3gcamp52"="right", "d3gcamp53"="right", "d3gcamp54"="left", "wtlatshhalo1"="right", "wtlatshhalo2"="left", "wtlatshhalo3"="left", "wtlatshhalo4"="right", "wtlatshhalo5"="right", "wtlatshhalo6"="left", "wtlatshhalo7"="right", "wtlatshhalo8"="left", "wtmedshhalo1"="left", "wtmedshhalo3"="right", "wtmedshhalo4"="left", "wtmedshhalo5"="right", "wtmedshhalo6"="left", "kadenmed5"="left", "kadenlat2"="left", "kadenlat3"="left", "kadenlat4"="left")
+
+#add a column for brain region
+subregion <- c("d3chr1" = "med", "d3chr2" = "med", "d3chr3"="med", "d3chr4"= "med", "d3chr5"="med", "d3chr6" = "med", "d3chr7"="med", "d3chr8"="med", "d3chr9"="med", "d3chr10"="med", "d3gcamp27"= "med", "d3gcamp28"="med", "d3gcamp31"="med", "d3gcamp33"="med", "d3gcamp34"="med", "wtchr1"="med", "wtchr3"="med", "wtchr4"="med", "wtchr5"="med", "d3gcamp36"="med", "d3gcamp38"="med", "d3gcamp39"="med", "d3chr19"="lat", "d3chr20"="lat", "d3chr21"="lat", "d3chr22"="lat", "d3chr26"="lat", "d3chr27"="lat", "d3chr28"="lat", "d3halo1"="lat", "d3halo2"="lat", "d3halo3"="lat", "d3halo4"="lat", "d3halo5"="lat", "d3halo6"="lat", "d3gcamp43"="lat", "d3gcamp44"="lat", "d3halo7"="lat", "d3halo8"="lat", "d3halo9"="lat", "d3halo10"="lat", "wtchr8"="lat", "wtchr9"="lat", "wtchr6"="lat", "wtchr7"="lat", "wtchr10"="lat", "d3gcamp40"="lat", "d3gcamp42"="lat", "d3chr24"="lat", "d3chr25"="lat", "d3chr29"="lat", "d3chr23"="lat", "d3halo12"="med", "d3halo13"="med", "d3halo14"="med", "d3halo16"="med", "d3halo17"="med", "d3halo18"="med", "d3chr30"="med", "d3chr31"="med", "d3chr32"="med", "d3chr33"="med", "d3chr34"="med", "d3chr35"="med", "d3yfp1"="lat", "d3yfp3"="lat", "d3yfp4"="lat", "d3yfp5"="lat", "d3yfp6"="lat", "spark3"="lat", "spark5"="lat", "spark7"="lat", "spark9"="lat", "d3halo20"="med", "d3halo21"="med", "d3halo22"="med", "d3halo24"="med", "d3halo25"="med", "d3halo26"="med", "bluecontrol20"="lat", "bluecontrol22"="lat", "d3gcamp50"="med", "d3gcamp51"="med", "d3gcamp52"="med", "d3gcamp53"="med", "d3gcamp54"="med" , "wtlatshhalo1"="lat", "wtlatshhalo2"="lat", "wtlatshhalo3"="lat", "wtlatshhalo4"="lat", "wtlatshhalo5"="lat", "wtlatshhalo6"="lat", "wtlatshhalo7"="lat", "wtlatshhalo8"="lat", "wtmedshhalo1"="med", "wtmedshhalo3"="med", "wtmedshhalo4"="med", "wtmedshhalo5"="med", "wtmedshhalo6"="med", "kadenmed5"="med", "kadenlat2"="lat", "kadenlat3"="lat", "kadenlat4"="lat")
+
+#add a column for genotype
+genotype <- c("d3chr1" = "d3cre", "d3chr2" = "d3cre", "d3chr3"="d3cre", "d3chr4"= "d3cre", "d3chr5"="d3cre", "d3chr6" = "d3cre", "d3chr7"="d3cre", "d3chr8"="d3cre", "d3chr9"="d3cre", "d3chr10"="d3cre", "d3gcamp27"= "d3cre", "d3gcamp28"="d3cre", "d3gcamp31"="d3cre", "d3gcamp33"="d3cre", "d3gcamp34"="d3cre", "wtchr1"="wt", "wtchr3"="wt", "wtchr4"="wt", "wtchr5"="wt", "d3gcamp36"="d3cre", "d3gcamp38"="d3cre", "d3gcamp39"="d3cre", "d3chr19"="d3cre", "d3chr20"="d3cre", "d3chr21"="d3cre", "d3chr22"="d3cre", "d3chr26"="d3cre", "d3chr27"="d3cre", "d3chr28"="d3cre", "d3halo1"="d3cre", "d3halo2"="d3cre", "d3halo3"="d3cre", "d3halo4"="d3cre", "d3halo5"="d3cre", "d3halo6"="d3cre", "d3gcamp43"="d3cre", "d3gcamp44"="d3cre", "d3halo7"="d3cre", "d3halo8"="d3cre", "d3halo9"="d3cre", "d3halo10"="d3cre", "wtchr8"="wt", "wtchr9"="wt", "wtchr6"="wt", "wtchr7"="wt", "wtchr10"="wt", "d3gcamp40"="d3cre", "d3gcamp42"="d3cre", "d3chr24"="d3cre", "d3chr25"="d3cre", "d3chr29"="d3cre", "d3chr23"="d3cre", "d3halo12"="d3cre", "d3halo13"="d3cre", "d3halo14"="d3cre", "d3halo16"="d3cre", "d3halo17"="d3cre", "d3halo18"="d3cre", "d3chr30"="d3cre", "d3chr31"="d3cre", "d3chr32"="d3cre", "d3chr33"="d3cre", "d3chr34"="d3cre", "d3chr35"="d3cre", "d3yfp1"="d3cre", "d3yfp3"="d3cre", "d3yfp4"="d3cre", "d3yfp5"="d3cre", "d3yfp6"="d3cre", "spark3"="d3cre", "spark5"="d3cre", "spark7"="d3cre", "spark9"="d3cre", "d3halo20"="d3cre", "d3halo21"="d3cre", "d3halo22"="d3cre", "d3halo24"="d3cre", "d3halo25"="d3cre", "d3halo26"="d3cre", "bluecontrol20"="d3cre", "bluecontrol22"="d3cre", "d3gcamp50"="d3cre", "d3gcamp51"="d3cre", "d3gcamp52"="d3cre", "d3gcamp53"="d3cre", "d3gcamp54"="d3cre", "wtlatshhalo1"="wt", "wtlatshhalo2"="wt", "wtlatshhalo3"="wt", "wtlatshhalo4"="wt", "wtlatshhalo5"="wt", "wtlatshhalo6"="wt", "wtlatshhalo7"="wt", "wtlatshhalo8"="wt",  "wtmedshhalo1"="wt", "wtmedshhalo3"="wt", "wtmedshhalo4"="wt", "wtmedshhalo5"="wt", "wtmedshhalo6"="wt", "kadenmed5"="d3cre", "kadenlat2"="d3cre", "kadenlat3"="d3cre", "kadenlat4"="d3cre")
+
+#separate controls from experimental mice
+Group <-c("d3chr1" = "chr", "d3chr2" = "chr", "d3chr3"="chr", "d3chr4"= "chr", "d3chr5"="chr", "d3chr6" = "chr", "d3chr7"="chr", "d3chr8"="chr", "d3chr9"="chr", "d3chr10"="chr", "d3gcamp27"= "yfpblue", "d3gcamp28"="yfpblue", "d3gcamp31"="yfpblue", "d3gcamp33"="yfpblue", "d3gcamp34"="yfpblue","d1spark1"="fentanyl", "d1spark2"="control", "d1spark3"="fentanyl", "d1spark4"="control", "d1spark5"="fentanyl", "d1spark6"="control", "d1spark7"="fentanyl", "d1spark8"="control", "d3chr11"="d3chr", "d3chr12"="d3chr", "d3chr13"="d3chr", "d3chr14"="d3chr", "d3chr15"="d3chr", "d3chr16"="d3chr", "d3chr17"="d3chr", "d3chr18"="d3chr", "wtchr1"="wtchr", "wtchr3"="wtchr", "wtchr4"="wtchr", "wtchr5"="wtchr", "d3gcamp36"="yfpblue", "d3gcamp38"="yfpblue", "d3gcamp39"="yfpblue", "d3chr19"="chr", "d3chr20"="chr", "d3chr21"="chr", "d3chr22"="chr", "d3chr26"="chr", "d3chr27"="chr", "d3chr28"="chr", "d3halo1"="halo", "d3halo2"="halo", "d3halo3"="halo", "d3halo4"="halo", "d3halo5"="halo", "d3halo6"="halo", "d3gcamp43"="yfporange", "d3gcamp44"="yfporange", "d3halo7"="halo", "d3halo8"="halo", "d3halo9"="halo", "d3halo10"="halo", "wtchr8"="wtchr", "wtchr9"="wtchr", "wtchr6"="wtchr", "wtchr7"="wtchr", "wtchr10"="wtchr", "d3gcamp40"="yfpblue", "d3gcamp42"="yfpblue", "d3chr24"="chr", "d3chr25"="chr", "d3chr29"="chr", "d3chr23"="chr", "D1spark1"="fentanyl", "D1spark3"="saline", "D1spark4"="saline", "D1spark5"="fentanyl", "D1spark6"="fentanyl", "D1spark7"="fentanyl", "d3halo12"="halo", "d3halo13"="halo", "d3halo14"="halo", "d3halo16"="halo", "d3halo17"="halo", "d3halo18"="halo", "d3chr30"="chr", "d3chr31"="chr", "d3chr32"="chr", "d3chr33"="chr", "d3chr34"="chr", "d3chr35"="chr", "wtspark2"="fentanyl", "wtspark3"="saline", "wtspark4"="fentanyl", "wtspark5"="saline", "wtspark6"="fentanyl", "wtspark7"="saline", "wtspark8"="fentanyl", "wtspark9"="saline", "wtspark10"="fentanyl", "d1crespark1"="saline", "d1crespark2"="fentanyl", "d1crespark3"="saline", "d1crespark4"="fentanyl", "d1crespark5"="saline", "d1crespark6"="fentanyl", "d1crespark7"="saline", "d1crespark8"="fentanyl", "d1crespark9"="saline", "d1crespark10"="fentanyl", "d1crespark11"="saline", "d1crespark12"="fentanyl", "d1crespark13"="saline", "d1crespark14"="fentanyl", "d1crespark15"="fentanyl", "spark3"="yfporange", "spark5"="yfporange", "spark7"="yfporange", "spark9"="yfporange", "d3halo20"="halo", "d3halo21"="halo", "d3halo22"="halo", "d3halo24"="halo", "d3halo25"="halo", "d3halo26"="halo", "bluecontrol20"="yfpblue", "bluecontrol22"="yfpblue", "d3gcamp50"="yfporange", "d3gcamp51"="yfporange", "d3gcamp52"="yfporange", "d3gcamp53"="yfporange", "d3gcamp54"="yfporange", "wtlatshhalo1"="wthalo", "wtlatshhalo2"="wthalo", "wtlatshhalo3"="wthalo", "wtlatshhalo4"="wthalo", "wtlatshhalo5"="wthalo", "wtlatshhalo6"="wthalo", "wtlatshhalo7"="wthalo", "wtlatshhalo8"="wthalo",  "wtmedshhalo1"="wthalo", "wtmedshhalo3"="wthalo", "wtmedshhalo4"="wthalo", "wtmedshhalo5"="wthalo", "wtmedshhalo6"="wthalo", "kadenmed5"="yfporange", "kadenlat2"="yfporange", "kadenlat3"="yfporange", "kadenlat4"="yfporange")
+```
+
+#input ROIs from RWD
+```{r}
+library(readxl)
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/RWD Data/")
+RWD_OFRS_ROIs <- read_excel("/Users/Elly/Desktop/Kim Lab-Whistler Lab/RWD Data/RWD_OFRS_ROIs.xlsx", sheet = 1)
+
+#change sheet if needed
+
+all_data <- RWD_OFRS_ROIs
+
+# Add a column for Group, subregion, and genotype to data frame
+all_data <- all_data %>% 
+  left_join(data.frame(Mouse = names(Group), Group = Group), by = "Mouse") %>% 
+  left_join(data.frame(Mouse = names(light_side), light_side = light_side), by = "Mouse")%>%
+  left_join(data.frame(Mouse = names(subregion), subregion = subregion), by = "Mouse") %>%
+  left_join(data.frame(Mouse = names(genotype), genotype = genotype), by = "Mouse")
+
+#calculate percent time light side
+
+all_data <- all_data %>%
+  group_by(Mouse, Treatment) %>%
+  mutate(ROI1 = as.numeric(ROI1),
+    RO12 = as.numeric(RO12),
+    PercentageTimeLightSide = if_else(
+      light_side == "left",
+      ROI1 / 1800,
+      RO12 / 1800)) 
+
+# Identify the mice that have three different levels under Treatment
+mice_with_three_levels <- all_data %>%
+  group_by(Mouse) %>%
+  filter(n_distinct(Treatment) == 3) %>%
+  pull(Mouse) %>%
+  unique()
+
+# Filter the rows with Treatment == "baseline" for these mice
+baseline_rows <- all_data %>%
+  filter(Mouse %in% mice_with_three_levels & Treatment == "baseline")
+
+# Create the new rows with Group == "yfpblue" and "yfporange"
+new_rows_yfpblue <- baseline_rows %>%
+  mutate(Group = "yfpblue", Treatment = "baseline")
+
+new_rows_yfporange <- baseline_rows %>%
+  mutate(Group = "yfporange", Treatment = "baseline")
+
+all_data <- all_data %>%
+  bind_rows(new_rows_yfpblue, new_rows_yfporange) %>%
+  mutate(
+    Group = case_when(
+      Treatment == "yfporange" ~ "yfporange",
+      Treatment == "yfpblue" ~ "yfpblue",
+      TRUE ~ Group  ),
+    Treatment = case_when(
+      Treatment == "yfpblue" ~ "rtpa",
+      Treatment == "yfporange" ~ "rtpa",
+      TRUE ~ Treatment  )) %>%
+  drop_na(Group)  
+```
+
+#fold changes
+```{r}
+# Define the fold change function
+fold_change <- function(baseline, rtpa) {
+  return(rtpa / baseline)
+}
+
+# Initialize a data frame to store results
+fold_changes <- data.frame()
+
+# Create a unique combination of Mouse and Group
+unique_combinations <- all_data %>%
+  dplyr::select(Mouse, Group) %>%
+  distinct()
+
+# Loop over unique combinations of Mouse and Group
+for (i in 1:nrow(unique_combinations)) {
+  m <- unique_combinations$Mouse[i]
+  g <- unique_combinations$Group[i]
+
+  # Subset data for the current combination
+  subset_data <- all_data[all_data$Mouse == m & all_data$Group == g, ]
+
+  baseline_percent <- subset_data$PercentageTimeLightSide[subset_data$Treatment == "baseline"]
+  rtpa_percent <- subset_data$PercentageTimeLightSide[subset_data$Treatment == "rtpa"]
+
+  # Check if we have values for both baseline and rtpa
+  if (length(baseline_percent) > 0 && length(rtpa_percent) > 0) {
+    # Take the first value if there are multiple entries
+    baseline_value <- baseline_percent[1]
+    rtpa_value <- rtpa_percent[1]
+
+    fc <- fold_change(baseline_value, rtpa_value)
+
+    fold_change_entry <- data.frame(Mouse = m, fold_change = fc, Group= g)
+
+    fold_changes <- rbind(fold_changes, fold_change_entry)
+  }
+}
+
+fold_changes <- fold_changes %>% 
+  left_join(data.frame(Mouse = names(subregion), subregion = subregion), by = "Mouse") %>% 
+  left_join(data.frame(Mouse = names(genotype), genotype = genotype), by = "Mouse") %>% 
+  left_join(data.frame(Mouse = names(light_side), light_side = light_side), by = "Mouse")
+
+#mean fold changes
+mean_fold <- fold_changes %>%  filter(Mouse!="d3halo14") %>%
+  group_by(Group, subregion, genotype) %>%
+  summarize(
+    mean_fold_change = mean(fold_change, na.rm = TRUE),
+    sd = sd(fold_change, na.rm = TRUE),
+    n = n()
+  ) %>%
+  mutate(sem = sd / sqrt(n)) %>%
+  ungroup()
+
+
+```
+
+# Figure 4C (lat halo) and yfp
+```{r}
+lat_halo <- data.frame(all_data) %>% filter(genotype=="d3cre") %>% 
+  filter(subregion=="lat") %>%
+  filter(Group =="halo" | Group =="yfporange") %>% 
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100) 
+
+summary_df <- lat_halo %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (lat_halo, aes(x=factor(interaction(Group, Treatment),
+                                       levels = c("halo.baseline", "halo.rtpa", "yfporange.baseline", "yfporange.rtpa")))) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), 
+           alpha = 0.5, 
+           stat = "summary", 
+           position = position_dodge(width = 0.7), 
+           fun = "mean", 
+           width=0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), size = 2, position = position_dodge(width = 0.7)) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) + 
+  theme_classic() +
+  scale_color_manual(values = c("halo" = "darkorange1", "yfporange"="darkorange1")) +
+  scale_fill_manual(values = c("halo" = "darkorange1", "yfporange"="darkorange1")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final", "Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+         axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+   guides(fill = FALSE, color = FALSE) +
+  annotate("text", 
+           x = 1.5, y = 90, 
+           label = "D3-CRE::\ndoublefloxed-NpHR", 
+           size = 7, family = "Arial", lineheight = 0.9) +
+  annotate("text", 
+           x = 3.5, y = 90, 
+           label = "D3-CRE::\ndoublefloxed-eYFP", 
+           size = 7, family = "Arial", lineheight = 0.9)
+  print(plot)
+  
+# Export the plot to EPS
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_4E.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 10.4,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+#2 way anova lat orange
+```{r}
+library(lme4)
+library(lmerTest)   # gives p-values
+
+model <- lmer(
+  PercentageTimeLightSide ~ Group * Treatment +
+    (1 | Mouse),     # random intercept for each mouse
+  data = lat_halo
+)
+
+summary(model)
+
+emm <- emmeans(model, ~ Group * Treatment)
+
+# Tukey-adjusted simple effects
+pairs(emm, by = "Group", adjust = "tukey")
+pairs(emm, by = "Treatment", adjust = "tukey")
+
+anova(model) #to show F stats
+
+```
+#Figure 4E (lat chr) and yfp
+```{r}
+lat_chr <- data.frame(all_data) %>% filter(genotype=="d3cre") %>% 
+  filter(subregion=="lat") %>%
+  filter(Group =="chr" | Group =="yfpblue") %>% 
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100) 
+
+summary_df <- lat_chr %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (lat_chr, aes(x=factor(interaction(Group, Treatment),
+                                       levels = c("chr.baseline", "chr.rtpa", "yfpblue.baseline", "yfpblue.rtpa")))) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), 
+           alpha = 0.5, 
+           stat = "summary", 
+           position = position_dodge(width = 0.7), 
+           fun = "mean", 
+           width=0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), size = 2, position = position_dodge(width = 0.7)) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) + 
+  theme_classic() +
+  scale_color_manual(values = c("chr" = "blue", "yfpblue"="blue")) +
+  scale_fill_manual(values = c("chr" = "blue", "yfpblue"="blue")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final", "Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+         axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+   guides(fill = FALSE, color = FALSE) +
+  annotate("text", 
+           x = 1.5, y = 90, 
+           label = "D3-CRE::\ndoublefloxed-ChR2", 
+           size = 7, family = "Arial", lineheight = 0.9) +
+  annotate("text", 
+           x = 3.5, y = 90, 
+           label = "D3-CRE::\ndoublefloxed-eYFP", 
+           size = 7, family = "Arial", lineheight = 0.9)
+  print(plot)
+  
+# Export the plot to EPS
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_4F.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 10.4,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+#2 way anova lat blue
+```{r}
+library(lme4)
+library(lmerTest)   # gives p-values
+
+model <- lmer(
+  PercentageTimeLightSide ~ Group * Treatment +
+    (1 | Mouse),     # random intercept for each mouse
+  data = lat_chr
+)
+
+summary(model)
+
+emm <- emmeans(model, ~ Group * Treatment)
+
+# Tukey-adjusted simple effects
+pairs(emm, by = "Group", adjust = "tukey")
+pairs(emm, by = "Treatment", adjust = "tukey")
+
+```
+
+#Figure 5G (med orange)
+```{r}
+med_halo <- data.frame(all_data) %>% filter(genotype=="d3cre") %>% 
+  filter(subregion=="med") %>%
+  filter(Group =="halo" | Group =="yfporange") %>% 
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100) 
+
+summary_df <- med_halo %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (med_halo, aes(x=factor(interaction(Group, Treatment),
+                                       levels = c("halo.baseline", "halo.rtpa", "yfporange.baseline", "yfporange.rtpa")))) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), 
+           alpha = 0.5, 
+           stat = "summary", 
+           position = position_dodge(width = 0.7), 
+           fun = "mean", 
+           width=0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), size = 2, position = position_dodge(width = 0.7)) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) + 
+  theme_classic() +
+  scale_color_manual(values = c("halo" = "darkorange1", "yfporange"="darkorange1")) +
+  scale_fill_manual(values = c("halo" = "darkorange1", "yfporange"="darkorange1")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final", "Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+         axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+   guides(fill = FALSE, color = FALSE) +
+  annotate("text", 
+           x = 1.5, y = 94, 
+           label = "D3-CRE::\ndoublefloxed-NpHR", 
+           size = 7, family = "Arial", lineheight = 0.9) +
+  annotate("text", 
+           x = 3.5, y = 94, 
+           label = "D3-CRE::\ndoublefloxed-eYFP", 
+           size = 7, family = "Arial", lineheight = 0.9)
+  print(plot)
+  
+# Export the plot to EPS
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_5G.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 10.4,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+#2 way anova med orange
+```{r}
+library(lme4)
+library(lmerTest)   # gives p-values
+
+model <- lmer(
+  PercentageTimeLightSide ~ Group * Treatment +
+    (1 | Mouse),     # random intercept for each mouse
+  data = med_halo
+)
+
+summary(model)
+
+emm <- emmeans(model, ~ Group * Treatment)
+
+# Tukey-adjusted simple effects
+pairs(emm, by = "Group", adjust = "tukey")
+pairs(emm, by = "Treatment", adjust = "tukey")
+```
+
+#Figure 5I (med blue)
+```{r}
+med_chr <- data.frame(all_data) %>% filter(genotype=="d3cre") %>% 
+  filter(subregion=="med") %>%
+  filter(Group =="chr" | Group =="yfpblue") %>% 
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100) 
+
+summary_df <- med_chr %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (med_chr, aes(x=factor(interaction(Group, Treatment),
+                                       levels = c("chr.baseline", "chr.rtpa", "yfpblue.baseline", "yfpblue.rtpa")))) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), 
+           alpha = 0.5, 
+           stat = "summary", 
+           position = position_dodge(width = 0.7), 
+           fun = "mean", 
+           width=0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group, group = Treatment), size = 2, position = position_dodge(width = 0.7)) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) + 
+  theme_classic() +
+  scale_color_manual(values = c("chr" = "blue", "yfpblue"="blue")) +
+  scale_fill_manual(values = c("chr" = "blue", "yfpblue"="blue")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final", "Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+         axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")  # Axis title in Arial
+  ) +
+   guides(fill = FALSE, color = FALSE) +
+  annotate("text", 
+           x = 1.5, y = 94, 
+           label = "D3-CRE::\ndoublefloxed-ChR2", 
+           size = 7, family = "Arial", lineheight = 0.9) +
+  annotate("text", 
+           x = 3.5, y = 94, 
+           label = "D3-CRE::\ndoublefloxed-eYFP", 
+           size = 7, family = "Arial", lineheight = 0.9)
+  print(plot)
+  
+# Export the plot to EPS
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_5H.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 10.4,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+#2 way anova med blue
+```{r}
+library(lme4)
+library(lmerTest)   # gives p-values
+
+model <- lmer(
+  PercentageTimeLightSide ~ Group * Treatment +
+    (1 | Mouse),     # random intercept for each mouse
+  data = med_chr
+)
+
+summary(model)
+
+emm <- emmeans(model, ~ Group * Treatment)
+
+# Tukey-adjusted simple effects
+pairs(emm, by = "Group", adjust = "tukey")
+pairs(emm, by = "Treatment", adjust = "tukey")
+```
+
+#Paired t tests
+```{r}
+t_test_results <- list()
+
+all_data <- all_data %>% drop_na()
+
+for (current_group in unique(all_data$Group)) {
+  for (current_genotype in unique(all_data$genotype)) {
+    for (current_subregion in unique(all_data$subregion)) {
+      
+      # Subset data for the current treatment, genotype, and drug
+      subset_data <- all_data[all_data$Group == current_group & 
+                                    all_data$genotype == current_genotype & 
+                                    all_data$subregion == current_subregion, ]
+      
+      
+      # Check if there are exactly two levels in the pref column
+      if (length(unique(subset_data$Treatment)) == 2) {
+        # Extract percent values for baseline and final
+        baseline_values <- subset_data$PercentageTimeLightSide[subset_data$Treatment == "baseline"]
+        final_values <- subset_data$PercentageTimeLightSide[subset_data$Treatment == "rtpa"]
+        
+        # Check if we have equal lengths for paired t-test
+        if (length(baseline_values) == length(final_values)) {
+          # Perform the paired t-test
+          t_test_result <- t.test(baseline_values, final_values, paired = TRUE)
+          
+          # Store results in the list
+          t_test_results[[paste(current_genotype, current_subregion, current_group, sep = "_")]] <- t_test_result
+        }
+      }
+    }
+  }
+}
+
+# Print the results
+print(t_test_results)
+```
+
+#unpaired t tests (fold change)
+```{r}
+filtered_df_lat_orange <- fold_changes[fold_changes$subregion == "lat" & fold_changes$Group != "yfpblue" & fold_changes$Group != "chr" & fold_changes$genotype=="d3cre", ]
+
+# Perform unpaired t-test between chr and halo groups for fold_change
+t_test_result_lat_orange <- t.test(fold_change ~ Group, data = filtered_df_lat_orange)
+
+# Display the t-test results
+print(t_test_result_lat_orange)
+
+filtered_df_lat_blue <- fold_changes[fold_changes$subregion == "lat" & fold_changes$Group != "yfporange" & fold_changes$Group != "halo" & fold_changes$genotype=="d3cre", ]
+
+# Perform unpaired t-test between chr and halo groups for fold_change
+t_test_result_lat_blue <- t.test(fold_change ~ Group, data = filtered_df_lat_blue)
+
+# Display the t-test results
+print(t_test_result_lat_blue)
+
+filtered_df_med_orange <- fold_changes[fold_changes$subregion == "med" & fold_changes$Group != "yfpblue" & fold_changes$Group != "chr" & fold_changes$genotype=="d3cre", ]
+
+# Perform unpaired t-test between chr and halo groups for fold_change
+t_test_result_med_orange <- t.test(fold_change ~ Group, data = filtered_df_med_orange)
+
+# Display the t-test results
+print(t_test_result_med_blue)
+
+filtered_df_med_blue <- fold_changes[fold_changes$subregion == "med" & fold_changes$Group != "yfporange" & fold_changes$Group != "halo" & fold_changes$genotype=="d3cre", ]
+
+# Perform unpaired t-test between chr and halo groups for fold_change
+t_test_result_med_blue <- t.test(fold_change ~ Group, data = filtered_df_med_blue)
+
+# Display the t-test results
+print(t_test_result_med_orange)
+```
+
+#Figure 4D(fold change lat)
+```{r}
+# Filter and adjust dataset
+fold_lat <- fold_changes %>%
+  dplyr::filter(subregion == "lat", genotype == "d3cre") %>%
+  dplyr::filter(row_number() %% 2 != 0) %>%
+  mutate(fold_change = fold_change - 1)
+
+# Calculate summary stats
+fold_summary <- fold_lat %>%
+  group_by(Group) %>%
+  summarize(
+    mean = mean(fold_change, na.rm = TRUE),
+    sem = sd(fold_change, na.rm = TRUE) / sqrt(n())
+  )
+
+# --- Shared color palette ---
+color_map <- c("halo" = "darkorange1", "yfporange" = "darkorange1",
+               "chr" = "blue2", "yfpblue" = "blue2")
+
+# --- ORANGE PLOT ---
+fold_orange <- fold_lat %>% filter(Group %in% c("halo", "yfporange"))
+fold_summary_orange <- fold_summary %>% filter(Group %in% c("halo", "yfporange"))
+
+plot_orange <- ggplot(fold_orange, aes(x = factor(Group, levels = c("halo", "yfporange")))) +
+  geom_bar(aes(y = fold_change, fill = Group, color = Group),
+           alpha = 0.5, stat = "summary", width = 0.7) +
+  geom_point(aes(y = fold_change, color = Group), size = 1,
+             position = position_jitterdodge()) +
+  geom_errorbar(data = fold_summary_orange,
+                aes(ymin = mean - sem, ymax = mean + sem, color = Group),
+                width = 0.2) +
+  scale_color_manual(values = color_map) +
+  scale_fill_manual(values = color_map) +
+  labs(y = "Fold Change") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(size = 22, color = "black", family = "Arial"),
+    axis.text.y = element_text(size = 22, color = "black", family = "Arial"),
+    axis.title.y = element_text(size = 25, family = "Arial"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(size = 25, family = "Arial"),
+    axis.line = element_line(size = 1.2),
+    plot.title = element_text(hjust = 0.5, size = 26, family = "Arial")
+  ) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(limits = c(-0.95, 1.1)) +
+  guides(fill = FALSE, color = FALSE) +
+   scale_x_discrete(labels = c("D3-CRE\nNpHR\norange light", "D3-CRE\neYFP\norange light")) +
+  ggtitle("Relative Fold Change")
+
+# --- BLUE PLOT ---
+fold_blue <- fold_lat %>% filter(Group %in% c("chr", "yfpblue"))
+fold_summary_blue <- fold_summary %>% filter(Group %in% c("chr", "yfpblue"))
+
+plot_blue <- ggplot(fold_blue, aes(x = factor(Group, levels = c("chr", "yfpblue")))) +
+  geom_bar(aes(y = fold_change, fill = Group, color = Group),
+           alpha = 0.5, stat = "summary", width = 0.7) +
+  geom_point(aes(y = fold_change, color = Group), size = 1,
+             position = position_jitterdodge()) +
+  geom_errorbar(data = fold_summary_blue,
+                aes(ymin = mean - sem, ymax = mean + sem, color = Group),
+                width = 0.2) +
+  scale_color_manual(values = color_map) +
+  scale_fill_manual(values = color_map) +
+  labs(y = "Fold Change") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(size = 22, color = "black", family = "Arial"),
+    axis.text.y = element_text(size = 22, color = "black", family = "Arial"),
+    axis.title.y = element_text(size = 25, family = "Arial"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(size = 25, family = "Arial"),
+    axis.line = element_line(size = 1.2),
+    plot.title = element_text(hjust = 0.5, size = 26, family = "Arial")
+  ) +
+  geom_hline(yintercept = 0) +
+scale_y_continuous(limits = c(-0.95, 1.1)) +
+  guides(fill = FALSE, color = FALSE) +
+  scale_x_discrete(labels = c("D3-CRE\nChR2\nblue light", "D3-CRE\neYFP\nblue light")) +
+  ggtitle("Relative Fold Change")
+
+# Print both
+print(plot_orange)
+print(plot_blue)
+
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_4C1.pdf",
+  plot = plot_orange,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 6,
+  units = "in",
+  family = "ArialMT"
+)
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_4C2.pdf",
+  plot = plot_blue,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 6,
+  units = "in",
+  family = "ArialMT"
+)
+```
+
+#Figure S3D
+```{r}
+wt_med <- data.frame(all_data) %>% dplyr::filter(genotype=="wt") %>% 
+  dplyr::filter(subregion=="med") %>%
+  dplyr::filter(Group=="wtchr") %>%
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100)
+
+wt_chr_med <- wt_med
+
+summary_df <- wt_med %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (wt_med, aes(x=Treatment)) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group), size = 2) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) +  
+  theme_classic() +
+  scale_color_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_fill_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+        axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")) +
+  ggtitle(str_wrap("MedSh", width=25)) +
+   guides(fill = FALSE, color = FALSE)
+# Remove legend for fill and color
+  
+  print(plot)
+  
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_S3F.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+#Figure S3C
+```{r}
+wt_med <- data.frame(all_data) %>% dplyr::filter(genotype=="wt") %>% 
+  dplyr::filter(subregion=="med") %>%
+  dplyr::filter(Group=="wthalo") %>%
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100)
+
+wt_halo_med <- wt_med
+
+summary_df <- wt_med %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (wt_med, aes(x=Treatment)) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group), size = 2) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) +  
+  theme_classic() +
+  scale_color_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_fill_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+        axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")) +
+  ggtitle(str_wrap("MedSh", width=25)) +
+   guides(fill = FALSE, color = FALSE)
+# Remove legend for fill and color
+  
+  print(plot)
+  
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_S3F.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+
+#Figure S3A
+```{r}
+wt_lat <- data.frame(all_data) %>% dplyr::filter(genotype=="wt") %>% 
+  dplyr::filter(subregion=="lat") %>%
+  dplyr::filter(Group=="wthalo") %>%
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100)
+
+wt_halo_lat <- wt_lat
+
+summary_df <- wt_lat %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (wt_lat, aes(x=Treatment)) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group), size = 2) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) +  
+  theme_classic() +
+  scale_color_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_fill_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+        axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")) +
+  ggtitle(str_wrap("LatSh", width=25)) +
+   guides(fill = FALSE, color = FALSE)
+# Remove legend for fill and color
+  
+  print(plot)
+  
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_S3D.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+
+#Figure S3B
+```{r}
+wt_lat <- data.frame(all_data) %>% dplyr::filter(genotype=="wt") %>% 
+  dplyr::filter(subregion=="lat") %>%
+  dplyr::filter(Group=="wtchr") %>%
+  mutate(PercentageTimeLightSide = PercentageTimeLightSide * 100)
+
+wt_chr_lat <- wt_lat
+
+summary_df <- wt_lat %>%
+  group_by(Group, Treatment) %>%
+  summarize(
+    mean = mean(PercentageTimeLightSide, na.rm = TRUE),
+    sem = sd(PercentageTimeLightSide, na.rm = TRUE) / sqrt(n()))
+
+plot <- ggplot (wt_lat, aes(x=Treatment)) +
+  geom_bar(aes(y = PercentageTimeLightSide, fill = Group, color = Group), 
+           alpha = 0.5, 
+           stat = "summary", 
+           fun = "mean",
+           width = 0.7) +
+  geom_errorbar(data=summary_df, aes(ymin = mean - sem, ymax = mean + sem, color=Group),
+                width = 0.2) +
+  geom_point(aes(y = PercentageTimeLightSide, fill = Group, color = Group), size = 2) +
+  geom_path(aes(group = Mouse, y = PercentageTimeLightSide, color = Group), alpha = 0.8) +  
+  theme_classic() +
+  scale_color_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_fill_manual(values = c("wthalo" = "darkorange1", "wtchr"="blue2")) +
+  scale_y_continuous(limits = c(0, 100), expand = c(0, 0)) +
+  ylab("Percent time on light side") +
+  scale_x_discrete(labels = c("Baseline", "Final")) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x.bottom = element_text(size = 25, color = "black"),
+        axis.title.x= element_blank(),
+        text = element_text(size = 25),
+        plot.title = element_text(hjust = 0.5, family = "Arial"), 
+        axis.line = element_line(size = 1.2),
+        axis.text = element_text(family = "Arial"),  # Apply Arial to axis text
+    axis.title = element_text(family = "Arial")) +
+  ggtitle(str_wrap("LatSh", width=25)) +
+   guides(fill = FALSE, color = FALSE)
+# Remove legend for fill and color
+  
+  print(plot)
+  
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_S3E.pdf",
+  plot = plot,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 8,
+  units = "in",
+  family = "ArialMT"
+)
+```
+
+#Figure 5H, J(fold change med)
+```{r}
+# Filter and adjust dataset
+fold_med <- fold_changes %>%
+  dplyr::filter(subregion == "med", genotype == "d3cre") %>%
+  dplyr::filter(row_number() %% 2 != 0) %>%
+  mutate(fold_change = fold_change - 1)
+
+# Calculate summary stats
+fold_summary <- fold_med %>%
+  group_by(Group) %>%
+  summarize(
+    mean = mean(fold_change, na.rm = TRUE),
+    sem = sd(fold_change, na.rm = TRUE) / sqrt(n())
+  )
+
+# --- Shared color palette ---
+color_map <- c("halo" = "darkorange1", "yfporange" = "darkorange1",
+               "chr" = "blue2", "yfpblue" = "blue2")
+
+# --- ORANGE PLOT ---
+fold_orange <- fold_med %>% filter(Group %in% c("halo", "yfporange"))
+fold_summary_orange <- fold_summary %>% filter(Group %in% c("halo", "yfporange"))
+
+plot_orange <- ggplot(fold_orange, aes(x = factor(Group, levels = c("halo", "yfporange")))) +
+  geom_bar(aes(y = fold_change, fill = Group, color = Group),
+           alpha = 0.5, stat = "summary", width = 0.7) +
+  geom_point(aes(y = fold_change, color = Group), size = 1,
+             position = position_jitterdodge()) +
+  geom_errorbar(data = fold_summary_orange,
+                aes(ymin = mean - sem, ymax = mean + sem, color = Group),
+                width = 0.2) +
+  scale_color_manual(values = color_map) +
+  scale_fill_manual(values = color_map) +
+  labs(y = "Fold Change") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(size = 22, color = "black", family = "Arial"),
+    axis.text.y = element_text(size = 22, color = "black", family = "Arial"),
+    axis.title.y = element_text(size = 25, family = "Arial"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(size = 25, family = "Arial"),
+    axis.line = element_line(size = 1.2),
+    plot.title = element_text(hjust = 0.5, size = 26, family = "Arial")
+  ) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(limits = c(-0.3, 2.05)) +
+  guides(fill = FALSE, color = FALSE) +
+   scale_x_discrete(labels = c("D3-CRE\nNpHR\norange light", "D3-CRE\neYFP\norange light")) +
+  ggtitle("Relative Fold Change")
+
+# --- BLUE PLOT ---
+fold_blue <- fold_med %>% filter(Group %in% c("chr", "yfpblue"))
+fold_summary_blue <- fold_summary %>% filter(Group %in% c("chr", "yfpblue"))
+
+plot_blue <- ggplot(fold_blue, aes(x = factor(Group, levels = c("chr", "yfpblue")))) +
+  geom_bar(aes(y = fold_change, fill = Group, color = Group),
+           alpha = 0.5, stat = "summary", width = 0.7) +
+  geom_point(aes(y = fold_change, color = Group), size = 1,
+             position = position_jitterdodge()) +
+  geom_errorbar(data = fold_summary_blue,
+                aes(ymin = mean - sem, ymax = mean + sem, color = Group),
+                width = 0.2) +
+  scale_color_manual(values = color_map) +
+  scale_fill_manual(values = color_map) +
+  labs(y = "Fold Change") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(size = 22, color = "black", family = "Arial"),
+    axis.text.y = element_text(size = 22, color = "black", family = "Arial"),
+    axis.title.y = element_text(size = 25, family = "Arial"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    text = element_text(size = 25, family = "Arial"),
+    axis.line = element_line(size = 1.2),
+    plot.title = element_text(hjust = 0.5, size = 26, family = "Arial")
+  ) +
+  geom_hline(yintercept = 0) +
+  scale_y_continuous(limits = c(-0.3, 2.05)) +
+  guides(fill = FALSE, color = FALSE) +
+  scale_x_discrete(labels = c("D3-CRE\nChR2\nblue light", "D3-CRE\neYFP\nblue light")) +
+  ggtitle("Relative Fold Change")
+
+# Print both
+print(plot_orange)
+print(plot_blue)
+
+# Set the working directory
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/PDF figures")
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_5E1.pdf",
+  plot = plot_orange,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 6,
+  units = "in",
+  family = "ArialMT"
+)
+
+# Save the plot as a PDF
+ggsave(
+  filename = "fig_5E2.pdf",
+  plot = plot_blue,
+  device = cairo_pdf,
+  width = 5.2,
+  height = 6,
+  units = "in",
+  family = "ArialMT"
+)
+```
+#exporting raw data figure 4
+```{r}
+folds_lat <- fold_changes %>% filter(genotype!="wt") %>% filter(subregion=="lat")
+
+raw_data <- createWorkbook()
+
+fig_labels <- c("Figure 4C", "Figure 4D", "Figure 4E", "Figure 4F")
+
+dfs_fig <- list(lat_halo, fold_orange, lat_chr, fold_blue)
+
+for (i in 1:length(fig_labels)) {
+  current_df <- dfs_fig[[i]]
+    
+    # Add a new worksheet with the custom sheet name
+    addWorksheet(raw_data, sheetName = fig_labels[i])
+    
+    # Write the pivoted data to the worksheet
+    writeData(raw_data, sheet = fig_labels[i], current_df)
+}
+
+saveWorkbook(raw_data, "/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/writing/raw_data_fig4.xlsx", overwrite = TRUE)
+```
+
+#exporting raw data figure 5
+```{r}
+folds_med <- fold_changes %>% filter(genotype!="wt") %>% filter(subregion=="med")
+
+raw_data <- createWorkbook()
+
+fig_labels <- c("Figure 5G", "Figure 5H", "Figure 5I", "Figure 5J")
+
+dfs_fig <- list(med_halo, fold_orange, med_chr, fold_blue)
+
+for (i in 1:length(fig_labels)) {
+  current_df <- dfs_fig[[i]]
+    
+    # Add a new worksheet with the custom sheet name
+    addWorksheet(raw_data, sheetName = fig_labels[i])
+    
+    # Write the pivoted data to the worksheet
+    writeData(raw_data, sheet = fig_labels[i], current_df)
+}
+
+saveWorkbook(raw_data, "/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/writing/raw_data_fig5.xlsx", overwrite = TRUE)
+```
+
+#exporting raw data figure S3
+```{r}
+raw_data <- createWorkbook()
+
+fig_labels <- c("Figure S3A", "Figure S3B", "Figure S3C", "Figure S3D")
+
+dfs_fig <- list(wt_halo_lat, wt_chr_lat, wt_halo_med, wt_chr_med)
+
+for (i in 1:length(fig_labels)) {
+  current_df <- dfs_fig[[i]]
+    
+    # Add a new worksheet with the custom sheet name
+    addWorksheet(raw_data, sheetName = fig_labels[i])
+    
+    # Write the pivoted data to the worksheet
+    writeData(raw_data, sheet = fig_labels[i], current_df)
+}
+
+saveWorkbook(raw_data, "/Users/Elly/Desktop/Kim Lab-Whistler Lab/D3 Behavior Manuscript/writing/raw_data_figS3.xlsx", overwrite = TRUE)
+```
+
+setwd("/Users/Elly/Desktop/Kim Lab-Whistler Lab/RWD Data/")
+write.csv(all_data, file = "all_data.csv", row.names = FALSE)
